@@ -1,0 +1,33 @@
+"use server";
+
+import { cloneRepo } from "@/lib/git/clone";
+import { getCommitHistory } from "@/lib/git/history";
+import { computeCommitSignals, classifyCommit } from "@/lib/analysis/heuristics";
+
+export async function analyzeRepo(repoUrl: string) {
+    // 1. Clone
+    const repoPath = await cloneRepo(repoUrl);
+    
+    // 2. Get commits
+    const commits = await getCommitHistory(repoPath);
+
+    // 3. Analyze each commit
+    const results = [];
+    for (const commit of commits.slice(0, 10)) {
+        const signals = await computeCommitSignals(repoPath, commit.hash);
+        const classification = classifyCommit(signals);
+   
+        results.push({
+            hash: commit.hash,
+            message: commit.message,
+            date: commit.date,
+            ...classification,
+            signals,
+        });
+    }
+
+    console.log(results);
+
+    // Later: store / return this
+    return results;
+}
