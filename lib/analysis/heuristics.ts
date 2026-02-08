@@ -57,7 +57,7 @@ export async function computeCommitSignals(repoPath: string, commitHash: string)
   const locRemoved = fileStats.reduce((sum, f) => sum + f.removed, 0);
 
   // assume single JS file for now
-  const jsFile = fileStats.find(f => f.path.endsWith(".js"));
+  const jsFile = fileStats.find(f => f.path.endsWith(".ts"));
   console.log("jsFile:", jsFile);
 
   let functionsDelta = 0;

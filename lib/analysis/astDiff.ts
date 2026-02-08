@@ -20,7 +20,7 @@ export async function getAstSignalsForCommit(repoPath: string, commitHash: strin
   );
   // commitHash  -> the commit itself
   // commitHash^ -> its immediate parent (one step before)
-  
+
   const after = await getFileAtCommit(
     repoPath,
     commitHash,
@@ -37,8 +37,10 @@ export function extractAstSignals(code: string): AstSignal {
     const ast = parse(code, {
       sourceType: 'module',
       plugins: [
-        'typescript',
-      ],
+        "typescript",
+        "decorators-legacy",
+        "classProperties",
+      ]
     });
 
     const signal: AstSignal = {

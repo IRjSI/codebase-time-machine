@@ -2,16 +2,21 @@
 
 import { useState } from "react";
 import { analyzeRepo } from "./actions";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await analyzeRepo(repoUrl);
+    const results = await analyzeRepo(repoUrl);
     setLoading(false);
+
+    const encoded = encodeURIComponent(JSON.stringify(results));
+    router.push(`/repo/results?data=${encoded}`);
   };
 
   return (

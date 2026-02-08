@@ -13,7 +13,7 @@ export async function analyzeRepo(repoUrl: string) {
 
     // 3. Analyze each commit
     const results = [];
-    for (const commit of commits.slice(0, 10)) {
+    for (const commit of commits.slice(0, 24)) {
         const signals = await computeCommitSignals(repoPath, commit.hash);
         const classification = classifyCommit(signals);
    
@@ -21,8 +21,9 @@ export async function analyzeRepo(repoUrl: string) {
             hash: commit.hash,
             message: commit.message,
             date: commit.date,
-            ...classification,
-            signals,
+            label: classification.label,
+            score: classification.score,
+            reasons: classification.reasons,
         });
     }
 
