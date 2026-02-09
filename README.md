@@ -35,3 +35,5 @@ Heuristic Classification
 
 - Heuristics, the important part:
     - Classify each commit as major or minor, i.e., important or not
+
+- Get all types of files (not only .ts) (`const jsFile = fileStats.find(f => f.path.endsWith(".ts"));`)

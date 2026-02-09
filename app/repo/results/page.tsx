@@ -1,25 +1,24 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
+import { analyzeRepo } from "@/app/actions";
 
 type CommitView = {
   hash: string;
   message: string;
   date: string;
-  label: "major" | "minor";
+  label: string;
   score: number;
   reasons: string[];
 };
 
-export default function ResultsPage() {
-  const searchParams = useSearchParams();
-  const data = searchParams.get("data");
+export default async function ResultsPage({ searchParams }: { searchParams: { repo: string } }) {
+  const params = await searchParams;
+
+  const data = await analyzeRepo(params.repo);
 
   if (!data) {
     return <p>No results</p>;
   }
 
-  const commits: CommitView[] = JSON.parse(decodeURIComponent(data));
+  const commits: CommitView[] = data;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black p-8">

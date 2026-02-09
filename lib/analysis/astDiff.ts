@@ -1,6 +1,7 @@
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import { simpleGit } from "simple-git";
+import { BABEL_PARSER_CONFIG } from './parserConfig';
 
 type AstSignal = {
   functions: number;
@@ -34,14 +35,7 @@ export async function getAstSignalsForCommit(repoPath: string, commitHash: strin
 }
 
 export function extractAstSignals(code: string): AstSignal {
-    const ast = parse(code, {
-      sourceType: 'module',
-      plugins: [
-        "typescript",
-        "decorators-legacy",
-        "classProperties",
-      ]
-    });
+    const ast = parse(code, BABEL_PARSER_CONFIG as any);
 
     const signal: AstSignal = {
       functions: 0,

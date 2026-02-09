@@ -4,7 +4,16 @@ import { cloneRepo } from "@/lib/git/clone";
 import { getCommitHistory } from "@/lib/git/history";
 import { computeCommitSignals, classifyCommit } from "@/lib/analysis/heuristics";
 
-export async function analyzeRepo(repoUrl: string) {
+type CommitView = {
+  hash: string;
+  message: string;
+  date: string;
+  label: string;
+  score: number;
+  reasons: string[];
+};
+
+export async function analyzeRepo(repoUrl: string): Promise<CommitView[]> {
     // 1. Clone
     const repoPath = await cloneRepo(repoUrl);
     
@@ -13,7 +22,7 @@ export async function analyzeRepo(repoUrl: string) {
 
     // 3. Analyze each commit
     const results = [];
-    for (const commit of commits.slice(0, 24)) {
+    for (const commit of commits.slice(0, 100)) {
         const signals = await computeCommitSignals(repoPath, commit.hash);
         const classification = classifyCommit(signals);
    

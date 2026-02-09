@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { analyzeRepo } from "./actions";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
@@ -12,11 +11,7 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const results = await analyzeRepo(repoUrl);
-    setLoading(false);
-
-    const encoded = encodeURIComponent(JSON.stringify(results));
-    router.push(`/repo/results?data=${encoded}`);
+    router.push(`/repo/results?repo=${repoUrl}`);
   };
 
   return (
