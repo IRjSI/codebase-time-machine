@@ -126,3 +126,25 @@ Each classification includes a score and human-readable reasons.
 - **Unsupported languages**: skipped without failure
 
 The system prioritizes **clarity and reliability over coverage**.
+
+---
+
+## Production constraints and design decisions
+
+This project performs Git-level analysis (cloning repositories, reading commit history, and inspecting file contents at specific commits). While this works naturally in local development, deploying to a serverless environment introduces strict runtime constraints.
+
+### Filesystem limitations
+
+On serverless platforms (e.g. Vercel), the application code directory is read-only. Only a temporary directory (`/tmp`) is writable.
+
+**Resolution**  
+Repositories are cloned into a temporary directory and removed after analysis. The cloned repository is treated as short-lived scratch space, not persistent storage.
+
+---
+
+### Missing system Git binary
+
+Serverless runtimes do not provide access to system binaries such as `git`. Any solution relying on spawning the Git CLI (e.g. via `simple-git`) will fail in production.
+
+**Resolution**  
+The project switches to a pure JavaScript Git implementation (`isomorphic-git`) that runs entirely in userland without requiring a system `git` binary. This makes the analysis pipeline compatible with serverless deployments.
