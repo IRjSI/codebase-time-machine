@@ -33,10 +33,17 @@ export async function getFileStatsForCommit(repoPath: string, commitHash: string
     
     const raw = await git.raw([
         "show",
-        "--numstat",
-        "--format=",
-        commitHash,
+        "--numstat", // instead of a textual diff, show numeric line statistics per file
+        "--format=", // print no commit header at all
+        commitHash, // commit to be inspected
     ]);
+    /*
+        raw:
+        added removed path
+        3	    1	    src/utils.ts
+        0	    2	    README.md
+        -	    -	    assets/logo.png
+    */
 
     return raw
         .trim()

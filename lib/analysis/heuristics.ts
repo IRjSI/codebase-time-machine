@@ -12,6 +12,7 @@ export type CommitSignals = {
 
   filesChanged: number;
   onlyDocsChanged: boolean;
+  structuralAnalysisApplied: boolean;
 };
 
 export function classifyCommit(signals: CommitSignals) {
@@ -49,20 +50,38 @@ export function classifyCommit(signals: CommitSignals) {
     reasons,
   };
 }
+
 export async function computeCommitSignals(repoPath: string, commitHash: string): Promise<CommitSignals> {
   const fileStats = await getFileStatsForCommit(repoPath, commitHash);
+  /* o/p of getFileStatsForCommit
+    {
+      path,
+      added: added === "-" ? 0 : Number(added),
+      removed: removed === "-" ? 0 : Number(removed),
+    };
+  */
 
+  // total lines of code added across all files in the commit
   const locAdded = fileStats.reduce((sum, f) => sum + f.added, 0);
+  
+  // total lines of code removed across all files in the commit
   const locRemoved = fileStats.reduce((sum, f) => sum + f.removed, 0);
+
+  /*
+    locAdded   = 10 + 3 + 5 = 18
+    locRemoved = 2 + 1 + 0 = 3
+  */
 
   const analyzableFiles = fileStats.filter(f =>
     [".js", ".jsx", ".ts", ".tsx"].some(ext => f.path.endsWith(ext))
   );
 
-  let functionsDelta = 0;
-  let exportsDelta = 0;
-  let classesDelta = 0;
-  let branchesDelta = 0;
+  let functionsDelta = 0; // how many functions added or removed in the commit
+  let exportsDelta = 0; // how many exports added or removed in the commit
+  let classesDelta = 0; // how many classes added or removed in the commit
+  let branchesDelta = 0; // how many new branches (if statements, loops) added or removed in the commit
+
+  const structuralAnalysisApplied = analyzableFiles.length > 0;
 
   if (analyzableFiles.length === 0) {
     const onlyDocsChanged = fileStats.every(f =>
@@ -81,16 +100,13 @@ export async function computeCommitSignals(repoPath: string, commitHash: string)
 
       filesChanged: fileStats.length,
       onlyDocsChanged,
+      structuralAnalysisApplied: false,
     };
   }
 
   const primaryFile = analyzableFiles[0];
 
-  const ast = await getAstSignalsForCommit(
-    repoPath,
-    commitHash,
-    primaryFile.path
-  );
+  const ast = await getAstSignalsForCommit(repoPath, commitHash, primaryFile.path);
 
   const { before, after } = ast;
 
@@ -124,5 +140,6 @@ export async function computeCommitSignals(repoPath: string, commitHash: string)
 
     filesChanged: fileStats.length,
     onlyDocsChanged: false,
+    structuralAnalysisApplied,
   };
 }

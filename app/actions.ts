@@ -11,11 +11,14 @@ type CommitView = {
   label: string;
   score: number;
   reasons: string[];
+  onlyDocsChanged: boolean;
+    structuralAnalysisApplied: boolean;
 };
 
 export async function analyzeRepo(repoUrl: string): Promise<CommitView[]> {
     // 1. Clone
-    const repoPath = await cloneRepo(repoUrl);
+    // why clone repo if we only need the commit history? because we also need to analyze the file changes in each commit to compute the signals, which requires access to the repo's .git directory and files. using git commands on the local clone is much more efficient than making API calls to a remote service for each commit.
+    const repoPath = await cloneRepo(repoUrl); 
     
     // 2. Get commits
     const commits = await getCommitHistory(repoPath);
@@ -23,7 +26,9 @@ export async function analyzeRepo(repoUrl: string): Promise<CommitView[]> {
     // 3. Analyze each commit
     const results = [];
     for (const commit of commits.slice(0, 100)) {
+        // gets all the signals for a commit
         const signals = await computeCommitSignals(repoPath, commit.hash);
+        // classifies the commit based on the signals
         const classification = classifyCommit(signals);
    
         results.push({
@@ -33,11 +38,10 @@ export async function analyzeRepo(repoUrl: string): Promise<CommitView[]> {
             label: classification.label,
             score: classification.score,
             reasons: classification.reasons,
+            onlyDocsChanged: signals.onlyDocsChanged,
+            structuralAnalysisApplied: signals.structuralAnalysisApplied
         });
     }
 
-    console.log(results);
-
-    // Later: store / return this
     return results;
 }

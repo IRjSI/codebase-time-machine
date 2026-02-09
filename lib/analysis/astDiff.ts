@@ -35,37 +35,46 @@ export async function getAstSignalsForCommit(repoPath: string, commitHash: strin
 }
 
 export function extractAstSignals(code: string): AstSignal {
-    const ast = parse(code, BABEL_PARSER_CONFIG as any);
-
-    const signal: AstSignal = {
-      functions: 0,
-      exports: 0,
-      classes: 0,
-      branches: 0,
-    };
-
-    traverse(ast, {
-      FunctionDeclaration() {
-        signal.functions++;
-      },
-      ExportNamedDeclaration() {
-        signal.exports++;
-      },
-      ExportDefaultDeclaration() {
-        signal.exports++;
-      },
-      ClassDeclaration() {
-        signal.classes++;
-      },
-      IfStatement() {
-        signal.branches++;
-      },
-      SwitchStatement() {
-        signal.branches++;
-      }
-    });
-
-    return signal;
+    try {
+      const ast = parse(code, BABEL_PARSER_CONFIG as any); // it takes source code as a string and converts it into an Abstract Syntax Tree (AST).
+  
+      const signal: AstSignal = {
+        functions: 0,
+        exports: 0,
+        classes: 0,
+        branches: 0,
+      };
+  
+      traverse(ast, {
+        FunctionDeclaration() {
+          signal.functions++;
+        },
+        ExportNamedDeclaration() {
+          signal.exports++;
+        },
+        ExportDefaultDeclaration() {
+          signal.exports++;
+        },
+        ClassDeclaration() {
+          signal.classes++;
+        },
+        IfStatement() {
+          signal.branches++;
+        },
+        SwitchStatement() {
+          signal.branches++;
+        }
+      });
+  
+      return signal;
+    } catch {
+      return {
+        functions: 0,
+        exports: 0,
+        classes: 0,
+        branches: 0,
+      };
+    }
 }
 
 async function getFileAtCommit(repoPath: string, commitHash: string, filePath: string): Promise<string | null> {

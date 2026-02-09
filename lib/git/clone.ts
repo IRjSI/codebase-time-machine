@@ -8,8 +8,8 @@ export async function cloneRepo(repoUrl: string): Promise<string> {
         throw new Error("Invalid repository URL");
     }
 
-    const baseDir = path.join(process.cwd(), ".repos");
-    const repoPath = path.join(baseDir, repoName);
+    const baseDir = path.join(process.cwd(), ".repos"); // C:\Users\HP\codebase-time-machine\.repos
+    const repoPath = path.join(baseDir, repoName); // C:\Users\HP\codebase-time-machine\.repos\mockingcase
 
     // NOTE: repo name collisions are not handled
     if (!fs.existsSync(baseDir)) {
