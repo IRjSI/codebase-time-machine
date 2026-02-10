@@ -1,4 +1,5 @@
-import { simpleGit, SimpleGit } from 'simple-git';
+import * as git from 'isomorphic-git';
+import http from "isomorphic-git/http/node";
 import path from "path";
 import fs from "fs";
 
@@ -16,8 +17,14 @@ export async function cloneRepo(repoUrl: string): Promise<string> {
         fs.mkdirSync(baseDir, { recursive: true });
     }
     if (!fs.existsSync(repoPath)) {
-        const git: SimpleGit = simpleGit();
-        await git.clone(repoUrl, repoPath, ["--depth", "100"]);
+        // const git: SimpleGit = simpleGit();
+        await git.clone({
+            fs,
+            http,
+            dir: repoPath,
+            url: repoUrl,
+            depth: 100,
+        });
     }
 
     return repoPath;

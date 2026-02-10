@@ -1,4 +1,5 @@
-import { simpleGit, SimpleGit } from 'simple-git';
+import * as git from 'isomorphic-git';
+import fs from "fs";
 
 export type CommitMeta = {
   hash: string;
@@ -15,28 +16,27 @@ export type FileStat = {
 };
 
 export async function getCommitHistory(repoPath: string): Promise<CommitMeta[]> {
-    const git: SimpleGit = simpleGit(repoPath);
     const log = await git.log({
-        "--all": null,
+        fs,
+        dir: repoPath,
     });
     
-    return log.all.map(commit => ({
-        hash: commit.hash,
-        date: commit.date,
-        message: commit.message,
-        author: commit.author_name
+    return log.map(commit => ({
+        hash: commit.oid,
+        date: new Date(commit.commit.author.timestamp * 1000).toISOString(),
+        message: commit.commit.message,
+        author: commit.commit.author.name,
+        parents: commit.commit.parent,
     }));
 }
 
 export async function getFileStatsForCommit(repoPath: string, commitHash: string): Promise<FileStat[]> {
-    const git: SimpleGit = simpleGit(repoPath);
-    
-    const raw = await git.raw([
-        "show",
-        "--numstat", // instead of a textual diff, show numeric line statistics per file
-        "--format=", // print no commit header at all
-        commitHash, // commit to be inspected
-    ]);
+    const commits = await git.log({ fs, dir: repoPath });
+    const commit = commits.find(c => c.oid === commitHash);
+
+    const parent = commit?.commit.parent?.[0];
+
+    const stats: { path: string; added: number; removed: number }[] = [];
     /*
         raw:
         added removed path
@@ -45,17 +45,43 @@ export async function getFileStatsForCommit(repoPath: string, commitHash: string
         -	    -	    assets/logo.png
     */
 
-    return raw
-        .trim()
-        .split("\n")
-        .filter(Boolean)
-        .map(line => {
-            const [added, removed, path] = line.split("\t");
+    async function readText(entry?: any): Promise<string> {
+        if (!entry) return "";
+        if (entry.type() !== "blob") return "";
 
-            return {
-                path,
-                added: added === "-" ? 0 : Number(added),
-                removed: removed === "-" ? 0 : Number(removed),
-            };
+        const content = await entry.content();
+        if (!content) return "";
+
+        return Buffer.from(content).toString("utf8");
+    }
+
+
+    await git.walk({
+        fs,
+        dir: repoPath,
+        trees: [
+        git.TREE({ ref: parent }),
+        git.TREE({ ref: commitHash }),
+        ],
+        map: async (filepath, [before, after]) => {
+        if (filepath === ".") return;
+
+        if (!before && !after) return;
+
+        const beforeText = await readText(before);
+
+        const afterText = await readText(after);
+
+        const beforeLines = beforeText.split("\n").length;
+        const afterLines = afterText.split("\n").length;
+
+        stats.push({
+            path: filepath,
+            added: Math.max(0, afterLines - beforeLines),
+            removed: Math.max(0, beforeLines - afterLines),
         });
+        },
+    });
+
+    return stats;
 }

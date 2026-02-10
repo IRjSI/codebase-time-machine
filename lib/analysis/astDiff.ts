@@ -1,6 +1,7 @@
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
-import { simpleGit } from "simple-git";
+import * as git from 'isomorphic-git';
+import fs from 'fs';
 import { BABEL_PARSER_CONFIG } from './parserConfig';
 
 type AstSignal = {
@@ -10,15 +11,13 @@ type AstSignal = {
   branches: number;
 };
 
-export async function getAstSignalsForCommit(repoPath: string, commitHash: string, filePath: string) {
+export async function getAstSignalsForCommit(repoPath: string, commitHash: string, filePath: string, parentHash: string | null) {
   // repoPath is the path to the git repository in our project's .repos directory
   // commitHash is the hash of the commit we want to analyze
   // filePath is the path to the file within the repository we want to analyze (e.g. "src/mockingcase.js")
-  const before = await getFileAtCommit(
-    repoPath,
-    `${commitHash}^`,
-    filePath
-  );
+  const before = parentHash
+    ? await getFileAtCommit(repoPath, parentHash, filePath)
+    : null;
   // commitHash  -> the commit itself
   // commitHash^ -> its immediate parent (one step before)
 
@@ -78,15 +77,21 @@ export function extractAstSignals(code: string): AstSignal {
 }
 
 async function getFileAtCommit(repoPath: string, commitHash: string, filePath: string): Promise<string | null> {
-  const git = simpleGit(repoPath);
+  console.log(repoPath, commitHash, filePath);
+  const { blob } = await git.readBlob({
+    fs,
+    dir: repoPath,
+    oid: commitHash,
+    filepath: filePath
+  });
 
   try {
     // git show <commitHash>:file.js
-    const content = await git.raw([
-      "show",
-      `${commitHash}:${filePath}`,
-    ]);
-    return content;
+    // const content = await git.raw([
+    //   "show",
+    //   `${commitHash}:${filePath}`,
+    // ]);
+    return Buffer.from(blob).toString("utf8");
   } catch {
     // file did not exist at this commit
     return null;

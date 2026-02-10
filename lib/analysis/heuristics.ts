@@ -51,7 +51,7 @@ export function classifyCommit(signals: CommitSignals) {
   };
 }
 
-export async function computeCommitSignals(repoPath: string, commitHash: string): Promise<CommitSignals> {
+export async function computeCommitSignals(repoPath: string, commitHash: string, parentHash: string | null): Promise<CommitSignals> {
   const fileStats = await getFileStatsForCommit(repoPath, commitHash);
   /* o/p of getFileStatsForCommit
     {
@@ -106,7 +106,7 @@ export async function computeCommitSignals(repoPath: string, commitHash: string)
 
   const primaryFile = analyzableFiles[0];
 
-  const ast = await getAstSignalsForCommit(repoPath, commitHash, primaryFile.path);
+  const ast = await getAstSignalsForCommit(repoPath, commitHash, primaryFile.path, parentHash);
 
   const { before, after } = ast;
 
