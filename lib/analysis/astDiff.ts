@@ -92,8 +92,11 @@ async function getFileAtCommit(repoPath: string, commitHash: string, filePath: s
     //   `${commitHash}:${filePath}`,
     // ]);
     return Buffer.from(blob).toString("utf8");
-  } catch {
-    // file did not exist at this commit
-    return null;
+  } catch(err: any) {
+    if (err.code === "NotFoundError") {
+      return null;
+    }
+    // Unexpected error → rethrow
+    throw err;
   }
 }
