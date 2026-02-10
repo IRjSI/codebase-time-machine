@@ -1,5 +1,7 @@
 import { getFileStatsForCommit } from "../git/history";
 import { getAstSignalsForCommit } from "./astDiff";
+import * as git from "isomorphic-git";
+import fs from "fs";
 
 export type CommitSignals = {
   locAdded: number;
@@ -49,6 +51,25 @@ export function classifyCommit(signals: CommitSignals) {
     score,
     reasons,
   };
+}
+
+async function fileExistsAtCommit(
+  repoPath: string,
+  commitHash: string,
+  filePath: string
+): Promise<boolean> {
+  try {
+    await git.readBlob({
+      fs,
+      dir: repoPath,
+      oid: commitHash,
+      filepath: filePath,
+    });
+    return true;
+  } catch (err: any) {
+    if (err.code === "NotFoundError") return false;
+    throw err;
+  }
 }
 
 export async function computeCommitSignals(repoPath: string, commitHash: string, parentHash: string | null): Promise<CommitSignals> {
@@ -104,9 +125,37 @@ export async function computeCommitSignals(repoPath: string, commitHash: string,
     };
   }
 
-  const primaryFile = analyzableFiles[0];
+  let primaryFile: string | null = null;
 
-  const ast = await getAstSignalsForCommit(repoPath, commitHash, primaryFile.path, parentHash);
+  for (const f of analyzableFiles) {
+    const existsInCommit = await fileExistsAtCommit(repoPath, commitHash, f.path);
+    const existsInParent = parentHash
+      ? await fileExistsAtCommit(repoPath, parentHash, f.path)
+      : false;
+
+    if (existsInCommit || existsInParent) {
+      primaryFile = f.path;
+      break;
+    }
+  }
+
+  if (!primaryFile) {
+    // No structurally analyzable file for this commit
+    return {
+      locAdded,
+      locRemoved,
+      functionsDelta: 0,
+      exportsDelta: 0,
+      classesDelta: 0,
+      branchesDelta: 0,
+      filesChanged: fileStats.length,
+      onlyDocsChanged: false,
+      structuralAnalysisApplied: false,
+    };
+  }
+
+
+  const ast = await getAstSignalsForCommit(repoPath, commitHash, primaryFile, parentHash);
 
   if (!ast) {
     // Structural analysis not applicable for this commit
