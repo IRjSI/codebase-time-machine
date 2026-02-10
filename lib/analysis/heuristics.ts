@@ -108,6 +108,21 @@ export async function computeCommitSignals(repoPath: string, commitHash: string,
 
   const ast = await getAstSignalsForCommit(repoPath, commitHash, primaryFile.path, parentHash);
 
+  if (!ast) {
+    // Structural analysis not applicable for this commit
+    return {
+      locAdded,
+      locRemoved,
+      functionsDelta: 0,
+      exportsDelta: 0,
+      classesDelta: 0,
+      branchesDelta: 0,
+      filesChanged: fileStats.length,
+      onlyDocsChanged: false,
+      structuralAnalysisApplied: false,
+    };
+  }
+
   const { before, after } = ast;
 
   if (before && after) {

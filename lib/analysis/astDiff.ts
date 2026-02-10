@@ -15,17 +15,25 @@ export async function getAstSignalsForCommit(repoPath: string, commitHash: strin
   // repoPath is the path to the git repository in our project's .repos directory
   // commitHash is the hash of the commit we want to analyze
   // filePath is the path to the file within the repository we want to analyze (e.g. "src/mockingcase.js")
-  const before = parentHash
-    ? await getFileAtCommit(repoPath, parentHash, filePath)
-    : null;
-  // commitHash  -> the commit itself
-  // commitHash^ -> its immediate parent (one step before)
+  let before: string | null = null;
+  let after: string | null = null;
 
-  const after = await getFileAtCommit(
-    repoPath,
-    commitHash,
-    filePath
-  );
+  try {
+    if (parentHash) {
+      before = await getFileAtCommit(repoPath, parentHash, filePath);
+    }
+    after = await getFileAtCommit(repoPath, commitHash, filePath);
+  } catch (err: any) {
+    // This is a hard failure (missing commit, repo corruption, etc.)
+    throw err;
+  }
+
+  if (!before && !after) {
+    return {
+      before: null,
+      after: null,
+    };
+  }
 
   return {
     before: before ? extractAstSignals(before) : null,
