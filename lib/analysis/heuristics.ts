@@ -88,7 +88,7 @@ export async function computeCommitSignals(repoPath: string, commitHash: string,
   // total lines of code removed across all files in the commit
   const locRemoved = fileStats.reduce((sum, f) => sum + f.removed, 0);
 
-  /*
+  /* example:
     locAdded   = 10 + 3 + 5 = 18
     locRemoved = 2 + 1 + 0 = 3
   */

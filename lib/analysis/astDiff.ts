@@ -85,7 +85,6 @@ export function extractAstSignals(code: string): AstSignal {
 }
 
 async function getFileAtCommit(repoPath: string, commitHash: string, filePath: string): Promise<string | null> {
-  console.log(repoPath, commitHash, filePath);
   const { blob } = await git.readBlob({
     fs,
     dir: repoPath,
@@ -104,7 +103,6 @@ async function getFileAtCommit(repoPath: string, commitHash: string, filePath: s
     if (err.code === "NotFoundError") {
       return null;
     }
-    // Unexpected error → rethrow
     throw err;
   }
 }

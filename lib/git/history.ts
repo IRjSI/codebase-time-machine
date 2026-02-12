@@ -31,6 +31,8 @@ export async function getCommitHistory(repoPath: string): Promise<CommitMeta[]> 
 }
 
 export async function getFileStatsForCommit(repoPath: string, commitHash: string): Promise<FileStat[]> {
+    // replacement for git show --numstat <commit>
+    
     const commits = await git.log({ fs, dir: repoPath });
     const commit = commits.find(c => c.oid === commitHash);
 
@@ -60,26 +62,26 @@ export async function getFileStatsForCommit(repoPath: string, commitHash: string
         fs,
         dir: repoPath,
         trees: [
-        git.TREE({ ref: parent }),
-        git.TREE({ ref: commitHash }),
+            git.TREE({ ref: parent }),
+            git.TREE({ ref: commitHash }),
         ],
         map: async (filepath, [before, after]) => {
-        if (filepath === ".") return;
+            if (filepath === ".") return;
 
-        if (!before && !after) return;
+            if (!before && !after) return;
 
-        const beforeText = await readText(before);
+            const beforeText = await readText(before);
 
-        const afterText = await readText(after);
+            const afterText = await readText(after);
 
-        const beforeLines = beforeText.split("\n").length;
-        const afterLines = afterText.split("\n").length;
+            const beforeLines = beforeText.split("\n").length;
+            const afterLines = afterText.split("\n").length;
 
-        stats.push({
-            path: filepath,
-            added: Math.max(0, afterLines - beforeLines),
-            removed: Math.max(0, beforeLines - afterLines),
-        });
+            stats.push({
+                path: filepath,
+                added: Math.max(0, afterLines - beforeLines),
+                removed: Math.max(0, beforeLines - afterLines),
+            });
         },
     });
 

@@ -27,7 +27,7 @@ export async function analyzeRepo(repoUrl: string): Promise<CommitView[]> {
     
         // 3. Analyze each commit
         const results = [];
-        for (const commit of commits.slice(0, 100)) {
+        for (const commit of commits.slice(0, 24)) {
             // gets all the signals for a commit
             const signals = await computeCommitSignals(repoPath, commit.hash, commit.parents?.[0] || null);
             // classifies the commit based on the signals
