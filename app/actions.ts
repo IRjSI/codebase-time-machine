@@ -16,12 +16,12 @@ type CommitView = {
     structuralAnalysisApplied: boolean;
 };
 
-export async function analyzeRepo(repoUrl: string): Promise<CommitView[]> {
+export async function analyzeRepo(repoUrl: string): Promise<{ success: boolean; data?: CommitView[]; error?: string }> {
     // 1. Clone
     // why clone repo if we only need the commit history? because we also need to analyze the file changes in each commit to compute the signals, which requires access to the repo's .git directory and files. using git commands on the local clone is much more efficient than making API calls to a remote service for each commit.
-    const repoPath = await cloneRepo(repoUrl); 
-    
+    let repoPath = "";
     try {
+        repoPath = await cloneRepo(repoUrl); 
         // 2. Get commits
         const commits = await getCommitHistory(repoPath);
     
@@ -45,8 +45,16 @@ export async function analyzeRepo(repoUrl: string): Promise<CommitView[]> {
             });
         }
     
-        return results;
+        return {
+            success: true,
+            data: results,
+        }
+    } catch(error: any) {
+        console.error("Error analyzing repository:", error);
+        return { success: false, error: error.message || "An error occurred while analyzing the repository." };
     } finally {
-        await fs.rm(repoPath, { recursive: true, force: true });
+        if (repoPath && repoPath.startsWith("/tmp/repos")) {
+            await fs.rm(repoPath, { recursive: true, force: true });
+        }
     }
 }

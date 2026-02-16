@@ -7,10 +7,16 @@ import Link from "next/link";
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const u = new URL(repoUrl);
+    if (!u.hostname.includes("github.com")) {
+      setError("Please enter a valid GitHub repository URL");
+      return;
+    }
     setLoading(true);
     router.push(`/repo/results?repo=${repoUrl}`);
   };
@@ -121,6 +127,7 @@ export default function Home() {
                 )}
               </span>
             </button>
+            {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
           </form>
 
           <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800">

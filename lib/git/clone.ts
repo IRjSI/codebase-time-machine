@@ -16,8 +16,8 @@ export async function cloneRepo(repoUrl: string): Promise<string> {
     if (!fs.existsSync(baseDir)) {
         fs.mkdirSync(baseDir, { recursive: true });
     }
-    if (!fs.existsSync(repoPath)) {
-        // const git: SimpleGit = simpleGit();
+    // const git: SimpleGit = simpleGit();
+    try {
         await git.clone({
             fs,
             http,
@@ -25,6 +25,8 @@ export async function cloneRepo(repoUrl: string): Promise<string> {
             url: repoUrl,
             depth: 100,
         });
+    } catch (error: any) {
+        if (!error.message.includes("exists")) throw error;
     }
 
     return repoPath;
